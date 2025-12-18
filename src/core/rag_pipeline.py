@@ -65,10 +65,10 @@ class RAGPipeline:
         )
     
     def _create_prompt(self) -> PromptTemplate:
-        """Create the prompt template."""
-        template = """You are a helpful AI assistant that answers questions based on the provided context from uploaded documents.
+        """Create the prompt template with CoT instructions."""
+        template = """You are an intelligent AI assistant provided with context from documents.
 
-Context from documents:
+Context:
 {context}
 
 Chat History:
@@ -77,11 +77,10 @@ Chat History:
 Question: {question}
 
 Instructions:
-1. Answer the question based primarily on the context provided
-2. If the context doesn't contain enough information, say so clearly
-3. Be concise but comprehensive
-4. If relevant, mention which document the information comes from
-5. Use a friendly, professional tone
+1. First, think step-by-step about how to answer the question based on the context. Enclose your thinking process in <thinking> tags.
+2. If the context doesn't contain the answer, say so clearly.
+3. Provide a clear, professional answer after the thinking tags.
+4. Cite the source document names if available.
 
 Answer:"""
         
@@ -92,21 +91,15 @@ Answer:"""
     
     def query(self, question: str, stream_container=None) -> Dict[str, Any]:
         """
-        Query the RAG system.
-        
-        Args:
-            question: User question
-            stream_container: Optional Streamlit container for streaming
-            
-        Returns:
-            Dictionary with answer and source documents
+        Query the RAG system with CoT support.
         """
         # Get relevant documents
         source_docs = self.retriever.get_relevant_documents(question)
         
         if not source_docs:
             return {
-                "answer": "I don't have any documents to answer your question. Please upload some PDFs first.",
+                "answer": "I don't have enough information in the uploaded documents to answer that. Please upload more documents.",
+                "reasoning": "No relevant documents found in the vector store.",
                 "sources": []
             }
         
@@ -128,39 +121,66 @@ Answer:"""
             question=question
         )
         
-        # Get answer with streaming if container provided
+        # Get answer
+        # Note: Streaming with thought tags is tricky. We'll stream the raw output
+        # and let the UI handle the tag parsing or just show raw stream and then clean up.
+        # For better UX, we might disable streaming for CoT or use a sophisticated parser.
+        # Let's keep streaming but we'll return the full parsed response at the end.
+        
+        full_response = ""
         if stream_container:
             stream_handler = StreamHandler(stream_container)
+            # Create a simple callback to accumulate text properly since stream_handler 
+            # might not capture everything if we are doing complex logic
             streaming_llm = ChatGoogleGenerativeAI(
                 model=Config.LLM_MODEL,
                 google_api_key=Config.GOOGLE_API_KEY,
-                temperature=0.3,
+                temperature=0.3, # Low temp for reasoning
                 streaming=True,
                 callbacks=[stream_handler],
                 convert_system_message_to_human=True
             )
-            answer = streaming_llm.invoke(formatted_prompt).content
+            # We invoke and get the full response wrapper
+            response_obj = streaming_llm.invoke(formatted_prompt)
+            full_response = response_obj.content
         else:
-            answer = self.llm.invoke(formatted_prompt).content
+            response_obj = self.llm.invoke(formatted_prompt)
+            full_response = response_obj.content
         
-        # Save to chat history
+        # Parse Thinking vs Answer
+        import re
+        reasoning = ""
+        answer = full_response
+        
+        thinking_match = re.search(r"<thinking>(.*?)</thinking>", full_response, re.DOTALL)
+        if thinking_match:
+            reasoning = thinking_match.group(1).strip()
+            # Remove thinking tags from answer
+            answer = re.sub(r"<thinking>.*?</thinking>", "", full_response, flags=re.DOTALL).strip()
+        
+        # Save to chat history (save clean answer)
         self.chat_history.append({"role": "Human", "content": question})
         self.chat_history.append({"role": "AI", "content": answer})
         
-        # Format sources
+        # Format sources with page numbers if available
         sources = []
-        seen_files = set()
+        seen_sources = set()
         for doc in source_docs:
             filename = doc.metadata.get("filename", "Unknown")
-            if filename not in seen_files:
+            page_num = doc.metadata.get("page", "?")
+            source_key = f"{filename}_p{page_num}"
+            
+            if source_key not in seen_sources:
                 sources.append({
                     "filename": filename,
+                    "page": page_num,
                     "text": doc.page_content[:200] + "..."
                 })
-                seen_files.add(filename)
+                seen_sources.add(source_key)
         
         return {
             "answer": answer,
+            "reasoning": reasoning,
             "sources": sources
         }
     

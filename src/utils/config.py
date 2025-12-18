@@ -27,7 +27,7 @@ class Config:
     TOP_K_RESULTS = 4
     
     # UI Configuration
-    APP_TITLE = "🧠 RAG Knowledge Base"
+    APP_TITLE = "RAG Knowledge Base"
     APP_ICON = "🧠"
     MAX_FILE_SIZE_MB = 10
     

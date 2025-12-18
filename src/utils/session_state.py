@@ -24,9 +24,18 @@ def init_session_state():
     # Current document being processed
     if "current_doc" not in st.session_state:
         st.session_state.current_doc = None
+    
+    # UI Theme (Default to Light for Notion vibe)
+    if "theme" not in st.session_state:
+        st.session_state.theme = "light"
 
 
-def add_message(role: str, content: str, sources: list = None):
+def set_theme(theme: str):
+    """Set the UI theme."""
+    st.session_state.theme = theme
+
+
+def add_message(role: str, content: str, sources: list = None, reasoning: str = None):
     """Add a message to chat history."""
     message = {
         "role": role,
@@ -34,6 +43,8 @@ def add_message(role: str, content: str, sources: list = None):
     }
     if sources:
         message["sources"] = sources
+    if reasoning:
+        message["reasoning"] = reasoning
     st.session_state.messages.append(message)
 
 
@@ -42,12 +53,15 @@ def clear_chat_history():
     st.session_state.messages = []
 
 
-def add_document(filename: str, num_pages: int):
+def add_document(filename: str, num_pages: int, metadata: dict = None):
     """Add a document to the uploaded documents list."""
-    st.session_state.documents.append({
+    doc = {
         "filename": filename,
         "num_pages": num_pages
-    })
+    }
+    if metadata:
+        doc.update(metadata)
+    st.session_state.documents.append(doc)
 
 
 def remove_document(filename: str):

@@ -70,8 +70,28 @@ def process_pdfs(uploaded_files: List, vector_store: VectorStore):
             chunks = processor.process_pdf(uploaded_file, uploaded_file.name)
             all_documents.extend(chunks)
             
+            # Extract generated FAQs and Metadata
+            if chunks and "faqs" in chunks[0]["metadata"]:
+                new_faqs = chunks[0]["metadata"]["faqs"]
+                if "doc_faqs" not in st.session_state:
+                    st.session_state.doc_faqs = []
+                # Add unique FAQs
+                for faq in new_faqs:
+                    if faq not in st.session_state.doc_faqs:
+                        st.session_state.doc_faqs.append(faq)
+                        
+            # Extract metadata for session state
+            doc_metadata = {}
+            if chunks and "metadata" in chunks[0]:
+                 # Get X-Ray data from first chunk
+                 meta = chunks[0]["metadata"]
+                 if "topics" in meta:
+                     doc_metadata["topics"] = meta["topics"]
+                 if "doc_type" in meta:
+                     doc_metadata["doc_type"] = meta["doc_type"]
+            
             # Add to session state
-            add_document(uploaded_file.name, num_pages)
+            add_document(uploaded_file.name, num_pages, doc_metadata)
         
         # Add all documents to vector store
         if all_documents:
@@ -89,6 +109,9 @@ def process_pdfs(uploaded_files: List, vector_store: VectorStore):
             progress_bar.progress(1.0)
             status_text.success(f"✅ Successfully processed {total_files} document(s)!")
             
+            if "doc_faqs" in st.session_state and st.session_state.doc_faqs:
+                st.toast(f"🎉 Generated {len(st.session_state.doc_faqs)} smart questions!", icon="💡")
+            
             st.balloons()
             
             # Clear after 2 seconds
@@ -96,6 +119,7 @@ def process_pdfs(uploaded_files: List, vector_store: VectorStore):
             time.sleep(2)
             progress_bar.empty()
             status_text.empty()
+            st.rerun() # Rerun to update sidebar and chat
         
     except Exception as e:
         progress_bar.empty()

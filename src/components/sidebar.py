@@ -12,6 +12,29 @@ def render_sidebar(vector_store: VectorStore):
         vector_store: VectorStore instance
     """
     with st.sidebar:
+        # Helper to load images
+        import base64
+        def get_base64_image(image_path):
+            try:
+                with open(image_path, "rb") as img_file:
+                    return base64.b64encode(img_file.read()).decode()
+            except Exception:
+                return ""
+
+        logo_b64 = get_base64_image("assets/image.png")
+        if logo_b64:
+            logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo-img" width="100">'
+        else:
+            logo_html = "🧠"
+
+        # Centered Layout for Logo
+        st.markdown(f"""
+            <div class="sidebar-content">
+                {logo_html}
+                <h3 style="margin-top: 15px; margin-bottom: 0;">RAG Knowledge Base</h3>
+            </div>
+        """, unsafe_allow_html=True)
+        
         st.markdown("## 📚 Document Library")
         
         # Show uploaded documents
@@ -26,6 +49,15 @@ def render_sidebar(vector_store: VectorStore):
                     with col1:
                         st.markdown(f"📄 **{doc['filename']}**")
                         st.caption(f"{doc['num_pages']} pages")
+                        
+                        # Show X-Ray Tags
+                        if "topics" in doc:
+                            topics = doc["topics"][:3] # Show max 3 topics
+                            # Create simple badge style using markdown
+                            badges = " ".join([f"`{t}`" for t in topics])
+                            st.markdown(badges)
+                        if "doc_type" in doc:
+                            st.caption(f"_{doc['doc_type']}_")
                     
                     with col2:
                         if st.button("🗑️", key=f"delete_{idx}_{doc['filename']}", help="Delete document"):

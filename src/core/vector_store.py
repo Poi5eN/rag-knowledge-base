@@ -46,7 +46,20 @@ class VectorStore:
             progress_callback: Optional callback function for progress updates
         """
         texts = [doc["text"] for doc in documents]
-        metadatas = [doc["metadata"] for doc in documents]
+        texts = [doc["text"] for doc in documents]
+        
+        # Sanitize metadata (ChromaDB requires primitives)
+        metadatas = []
+        for doc in documents:
+            clean_meta = {}
+            for k, v in doc["metadata"].items():
+                if isinstance(v, list):
+                    clean_meta[k] = ", ".join(str(i) for i in v)
+                elif v is None:
+                    clean_meta[k] = ""
+                else:
+                    clean_meta[k] = v
+            metadatas.append(clean_meta)
         
         # Generate unique IDs
         ids = [f"{doc['metadata']['filename']}_{doc['metadata']['chunk_id']}" 

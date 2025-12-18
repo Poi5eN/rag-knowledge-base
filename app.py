@@ -19,10 +19,13 @@ from assets.styles import get_custom_css
 def main():
     """Main application entry point."""
     
+    # Initialize session state (including theme)
+    init_session_state()
+    
     # Page configuration
     st.set_page_config(
         page_title=Config.APP_TITLE,
-        page_icon=Config.APP_ICON,
+        page_icon="assets/image.png",
         layout="wide",
         initial_sidebar_state="expanded",
         menu_items={
@@ -30,15 +33,43 @@ def main():
         }
     )
     
-    # Inject custom CSS
-    st.markdown(get_custom_css(), unsafe_allow_html=True)
+    # Inject custom CSS based on theme
+    st.markdown(get_custom_css(st.session_state.theme), unsafe_allow_html=True)
     
-    # Initialize session state
-    init_session_state()
+    # Helper to load images
+    import base64
+    def get_base64_image(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+            
+    try:
+        ai_icon_b64 = get_base64_image("assets/ai.png")
+        icon_html = f'<img src="data:image/png;base64,{ai_icon_b64}" class="header-icon" width="45">'
+    except:
+        icon_html = "🤖"
+
+    # Top Bar: Title (Left) and Theme Toggle (Right)
+    col_header, col_toggle = st.columns([6, 1])
     
-    # Header
-    st.markdown(f"# {Config.APP_ICON} {Config.APP_TITLE}")
-    st.markdown("### Chat with your documents using AI-powered search")
+    with col_header:
+        # Header with AI Icon using Flexbox for perfect alignment
+        st.markdown(f"""
+            <div class="header-container">
+                {icon_html}
+                <h1 style='margin:0; padding:0; display:inline-block; vertical-align:middle;'>{Config.APP_TITLE}</h1>
+            </div>
+        """, unsafe_allow_html=True)
+            
+    with col_toggle:
+        # Theme Toggle Button
+        current_theme = st.session_state.theme
+        btn_text = "🌙" if current_theme == "light" else "☀️" 
+        if st.button(btn_text, key="theme_toggle_top", help="Switch Theme", use_container_width=True):
+             new_theme = "dark" if current_theme == "light" else "light"
+             st.session_state.theme = new_theme
+             st.rerun()
+
+    st.markdown("<p style='color: var(--text-secondary); margin-top: -10px; margin-bottom: 2rem;'>Chat with your documents using AI-powered search</p>", unsafe_allow_html=True)
     st.divider()
     
     # Validate configuration
