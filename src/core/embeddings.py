@@ -32,8 +32,9 @@ class EmbeddingGenerator:
     def _load_local_model(_self):
         """Load local sentence-transformers model as a fallback (cached)."""
         try:
+            # Using mpnet-base-v2 because it has 768 dimensions, matching Gemini
             return HuggingFaceEmbeddings(
-                model_name="all-MiniLM-L6-v2",
+                model_name="sentence-transformers/all-mpnet-base-v2",
                 model_kwargs={'device': 'cpu'}
             )
         except Exception:
