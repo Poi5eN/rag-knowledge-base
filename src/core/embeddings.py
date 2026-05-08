@@ -1,5 +1,4 @@
-"""Embedding generation using Sentence Transformers (free local model)."""
-from sentence_transformers import SentenceTransformer
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from typing import List
 import streamlit as st
 from src.utils.config import Config
@@ -14,31 +13,20 @@ class EmbeddingGenerator:
     
     @st.cache_resource
     def _load_model(_self):
-        """Load the sentence transformer model (cached)."""
-        return SentenceTransformer(Config.EMBEDDING_MODEL)
+        """Load the Google embeddings model (cached)."""
+        return GoogleGenerativeAIEmbeddings(
+            model="models/text-embedding-004",
+            google_api_key=Config.GOOGLE_API_KEY
+        )
     
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Generate embeddings for a list of texts.
-        
-        Args:
-            texts: List of text strings to embed
-            
-        Returns:
-            List of embedding vectors
+        Generate embeddings for a list of texts using Google's API.
         """
-        embeddings = self.model.encode(texts, show_progress_bar=True)
-        return embeddings.tolist()
+        return self.model.embed_documents(texts)
     
     def generate_embedding(self, text: str) -> List[float]:
         """
         Generate embedding for a single text.
-        
-        Args:
-            text: Text string to embed
-            
-        Returns:
-            Embedding vector
         """
-        embedding = self.model.encode([text], show_progress_bar=False)
-        return embedding[0].tolist()
+        return self.model.embed_query(text)

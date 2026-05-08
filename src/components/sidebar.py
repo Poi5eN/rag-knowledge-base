@@ -1,4 +1,5 @@
 """Document management sidebar."""
+# pyrefly: ignore [missing-import]
 import streamlit as st
 from src.core.vector_store import VectorStore
 from src.utils.session_state import remove_document, clear_all_documents, clear_chat_history
@@ -28,12 +29,12 @@ def render_sidebar(vector_store: VectorStore):
             logo_html = "🧠"
 
         # Centered Layout for Logo
-        st.markdown(f"""
+        st.html(f"""
             <div class="sidebar-content">
                 {logo_html}
                 <h3 style="margin-top: 15px; margin-bottom: 0;">RAG Knowledge Base</h3>
             </div>
-        """, unsafe_allow_html=True)
+        """)
         
         st.markdown("## 📚 Document Library")
         
@@ -92,6 +93,16 @@ def render_sidebar(vector_store: VectorStore):
         
         st.divider()
         
+        # Suggested Questions (Helpful Feature)
+        if st.session_state.get("doc_faqs"):
+            st.markdown("### 💡 Suggested Questions")
+            for faq in st.session_state.doc_faqs[:5]:
+                if st.button(faq, key=f"faq_{faq}", use_container_width=True):
+                    # We can't easily trigger the chat input from here, but we can set a session state variable
+                    st.session_state.current_prompt = faq
+                    st.rerun()
+            st.divider()
+
         # Chat controls
         st.markdown("### 💬 Chat Controls")
         if st.button("🧹 Clear Chat History", use_container_width=True):

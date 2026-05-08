@@ -34,7 +34,7 @@ def main():
     )
     
     # Inject custom CSS based on theme
-    st.markdown(get_custom_css(st.session_state.theme), unsafe_allow_html=True)
+    st.html(get_custom_css(st.session_state.theme))
     
     # Helper to load images
     import base64
@@ -48,29 +48,29 @@ def main():
     except:
         icon_html = "🤖"
 
-    # Top Bar: Title (Left) and Theme Toggle (Right)
-    col_header, col_toggle = st.columns([6, 1])
+    # Top Bar: Notion-style Title and Theme Toggle
+    col_header, col_toggle = st.columns([10, 1])
     
     with col_header:
-        # Header with AI Icon using Flexbox for perfect alignment
-        st.markdown(f"""
-            <div class="header-container">
-                {icon_html}
-                <h1 style='margin:0; padding:0; display:inline-block; vertical-align:middle;'>{Config.APP_TITLE}</h1>
-            </div>
-        """, unsafe_allow_html=True)
+        st.html(f"""
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem;">
+    <span style="font-size: 2.5rem;">{Config.APP_ICON}</span>
+    <div>
+        <h1 style='margin:0; font-weight: 700; font-size: 2rem;'>{Config.APP_TITLE}</h1>
+        <p style='color: var(--text-secondary); margin:0; font-size: 0.95rem;'>Think, analyze, and chat with your documents</p>
+    </div>
+</div>
+        """)
             
     with col_toggle:
-        # Theme Toggle Button
+        # Theme Toggle Button (Top Right)
         current_theme = st.session_state.theme
         btn_text = "🌙" if current_theme == "light" else "☀️" 
-        if st.button(btn_text, key="theme_toggle_top", help="Switch Theme", use_container_width=True):
-             new_theme = "dark" if current_theme == "light" else "light"
-             st.session_state.theme = new_theme
+        if st.button(btn_text, key="theme_toggle_top", help="Switch Appearance"):
+             st.session_state.theme = "dark" if current_theme == "light" else "light"
              st.rerun()
 
-    st.markdown("<p style='color: var(--text-secondary); margin-top: -10px; margin-bottom: 2rem;'>Chat with your documents using AI-powered search</p>", unsafe_allow_html=True)
-    st.divider()
+    st.html("<div style='height: 1px; background-color: var(--border-color); margin: 1rem 0 2rem 0; opacity: 0.5;'></div>")
     
     # Validate configuration
     try:

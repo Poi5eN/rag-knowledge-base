@@ -1,4 +1,5 @@
 """PDF upload component with beautiful UI."""
+# pyrefly: ignore [missing-import]
 import streamlit as st
 from typing import List
 from src.core.pdf_processor import PDFProcessor
@@ -14,15 +15,18 @@ def render_pdf_uploader(vector_store: VectorStore):
     Args:
         vector_store: VectorStore instance
     """
-    st.markdown("### 📄 Upload Documents")
-    st.markdown("Upload PDF documents to chat with them using AI")
+    st.html("""
+<div class="notion-card">
+    <h4>📄 Upload Documents</h4>
+    <p style="color: var(--text-secondary); font-size: 0.9rem;">Add PDF files to your library. Max 10MB per file.</p>
+</div>
+    """)
     
     uploaded_files = st.file_uploader(
         "Choose PDF files",
         type=["pdf"],
         accept_multiple_files=True,
-        label_visibility="collapsed",
-        help=f"Upload PDF files (max {Config.MAX_FILE_SIZE_MB}MB each)"
+        label_visibility="collapsed"
     )
     
     if uploaded_files:

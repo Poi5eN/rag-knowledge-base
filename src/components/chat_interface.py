@@ -1,7 +1,9 @@
 """Chat interface component with streaming responses."""
+# pyrefly: ignore [missing-import]
 import streamlit as st
 from typing import Dict, Any
 from src.core.rag_pipeline import RAGPipeline
+from src.utils.config import Config
 from src.utils.session_state import add_message
 
 
@@ -52,92 +54,94 @@ def render_chat_interface(rag_pipeline: RAGPipeline):
     # Simple logic to handle the "Rerun" case where we added a user message but haven't generated response yet
     # Check if last message is user, if so, generate response
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-         with st.chat_message("assistant"):
-            response_container = st.empty()
-            
-            # Custom Thinking Animation (Neural Pulse)
-            thinking_placeholder = st.empty()
-            thinking_placeholder.markdown("""
-                <div class="thinking-container">
-                    <div class="neural-dots">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                    </div>
-                    <div class="thinking-text">Resolving query...</div>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            try:
-                last_user_msg = st.session_state.messages[-1]["content"]
-                result = rag_pipeline.query(last_user_msg)
-                
-                # Clear thinking animation
-                thinking_placeholder.empty()
-                
-                response_container.markdown(result["answer"])
-                add_message("assistant", result["answer"], result.get("sources"), result.get("reasoning"))
-                st.rerun()
-            except Exception as e:
-                 thinking_placeholder.empty()
-                 st.error(f"Error: {e}")
+                with st.chat_message("assistant", avatar="🤖"):
+                    # Show a subtle pulsing "Thinking" indicator
+                    with st.container():
+                        st.html("""
+<div class="thinking-container" style="background: transparent; border: none; padding: 0;">
+    <div class="neural-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <span class="thinking-text" style="font-style: italic;">Consulting your documents...</span>
+</div>
+                        """)
+                        
+                        try:
+                            last_user_msg = st.session_state.messages[-1]["content"]
+                            result = rag_pipeline.query(last_user_msg)
+                            st.rerun()
+                        except Exception as e:
+                             st.error(f"Error: {e}")
 
     # Chat input
-    if prompt := st.chat_input("Ask a question about your documents..."):
+    prompt = st.chat_input("Ask a question about your documents...")
+    
+    # Handle suggested questions from sidebar
+    if st.session_state.get("current_prompt"):
+        prompt = st.session_state.current_prompt
+        del st.session_state.current_prompt
+        
+    if prompt:
         # Add user message
         add_message("user", prompt)
         st.rerun() # Rerun to trigger the generation block above
 
 
 def render_welcome_message():
-    """Render welcome message when no documents are uploaded."""
-    import base64
-    def get_base64_image(image_path):
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-            
-    try:
-        logo_b64 = get_base64_image("assets/image.png")
-        logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo-img" width="90">'
-    except:
-        logo_html = "🧠"
-
-    st.markdown(f"""
-    <div style='text-align: center; margin-top: 2rem;'>
-        {logo_html}
-        <h2 style='font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; margin-top: 1rem;'>Welcome to RAG Knowledge Base</h2>
-        <p style='font-size: 1.1rem; color: var(--text-secondary); margin-top: 0.5rem;'>
-            Upload PDFs and chat with an intelligent agent
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+#     """Render the landing page welcome message."""
+#     st.html(f"""
+# <div class="welcome-container" style="animation: fadeIn 0.8s ease-out;">
+#     <div style="font-size: 5rem; margin-bottom: 1rem;">{Config.APP_ICON}</div>
+#     <h2 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Welcome to your Knowledge Base</h2>
+#     <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin-bottom: 3rem;">
+#         A minimal, AI-powered system to transform your PDFs into an interactive brain. 
+#         Upload documents to get started.
+#     </p>
+    
+#     <div class="doc-gallery" style="width: 100%; max-width: 900px;">
+#         <div class="notion-card">
+#             <div style="font-size: 2rem; margin-bottom: 1rem;">📤</div>
+#             <h4 style="margin-bottom: 0.5rem;">Upload</h4>
+#             <p style="font-size: 0.9rem; color: var(--text-secondary);">Bring your PDFs, research papers, or manuals.</p>
+#         </div>
+#         <div class="notion-card">
+#             <div style="font-size: 2rem; margin-bottom: 1rem;">🧠</div>
+#             <h4 style="margin-bottom: 0.5rem;">AI Analysis</h4>
+#             <p style="font-size: 0.9rem; color: var(--text-secondary);">Automatic topic detection and summary extraction.</p>
+#         </div>
+#         <div class="notion-card">
+#             <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+#             <h4 style="margin-bottom: 0.5rem;">Chat</h4>
+#             <p style="font-size: 0.9rem; color: var(--text-secondary);">Ask questions and get answers with citations.</p>
+#         </div>
+#     </div>
+# </div>
+#     """)
     
     # Feature cards
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("""
+        st.html("""
         <div style='text-align: center; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;'>
             <h3 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important; font-size: 1.2rem !important;'>📤</h3>
             <h4 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important;'>Upload</h4>
             <p style='margin: 0; color: var(--text-secondary); font-size: 0.9rem;'>Upload multiple PDF documents</p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
     
     with col2:
-        st.markdown("""
+        st.html("""
         <div style='text-align: center; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;'>
             <h3 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important; font-size: 1.2rem !important;'>🧠</h3>
             <h4 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important;'>AI Analysis</h4>
             <p style='margin: 0; color: var(--text-secondary); font-size: 0.9rem;'>Powered by Google Gemini</p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
     
     with col3:
-        st.markdown("""
+        st.html("""
         <div style='text-align: center; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;'>
             <h3 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important; font-size: 1.2rem !important;'>💬</h3>
             <h4 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important;'>Chat</h4>
             <p style='margin: 0; color: var(--text-secondary); font-size: 0.9rem;'>Get instant answers & citations</p>
         </div>
-        """, unsafe_allow_html=True)
+        """)
