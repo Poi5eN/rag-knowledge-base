@@ -86,62 +86,32 @@ def render_chat_interface(rag_pipeline: RAGPipeline):
 
 
 def render_welcome_message():
-#     """Render the landing page welcome message."""
-#     st.html(f"""
-# <div class="welcome-container" style="animation: fadeIn 0.8s ease-out;">
-#     <div style="font-size: 5rem; margin-bottom: 1rem;">{Config.APP_ICON}</div>
-#     <h2 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Welcome to your Knowledge Base</h2>
-#     <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin-bottom: 3rem;">
-#         A minimal, AI-powered system to transform your PDFs into an interactive brain. 
-#         Upload documents to get started.
-#     </p>
+    """Render the landing page welcome message."""
+    st.html(f"""
+<div class="welcome-container" style="animation: fadeIn 0.8s ease-out;">
+    <div style="font-size: 5rem; margin-bottom: 1rem;">{Config.APP_ICON}</div>
+    <h2 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Welcome to your Knowledge Base</h2>
+    <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin-bottom: 3rem;">
+        A minimal, AI-powered system to transform your PDFs into an interactive brain. 
+        Upload documents to get started.
+    </p>
     
-#     <div class="doc-gallery" style="width: 100%; max-width: 900px;">
-#         <div class="notion-card">
-#             <div style="font-size: 2rem; margin-bottom: 1rem;">📤</div>
-#             <h4 style="margin-bottom: 0.5rem;">Upload</h4>
-#             <p style="font-size: 0.9rem; color: var(--text-secondary);">Bring your PDFs, research papers, or manuals.</p>
-#         </div>
-#         <div class="notion-card">
-#             <div style="font-size: 2rem; margin-bottom: 1rem;">🧠</div>
-#             <h4 style="margin-bottom: 0.5rem;">AI Analysis</h4>
-#             <p style="font-size: 0.9rem; color: var(--text-secondary);">Automatic topic detection and summary extraction.</p>
-#         </div>
-#         <div class="notion-card">
-#             <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
-#             <h4 style="margin-bottom: 0.5rem;">Chat</h4>
-#             <p style="font-size: 0.9rem; color: var(--text-secondary);">Ask questions and get answers with citations.</p>
-#         </div>
-#     </div>
-# </div>
-#     """)
-    
-    # Feature cards
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.html("""
-        <div style='text-align: center; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;'>
-            <h3 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important; font-size: 1.2rem !important;'>📤</h3>
-            <h4 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important;'>Upload</h4>
-            <p style='margin: 0; color: var(--text-secondary); font-size: 0.9rem;'>Upload multiple PDF documents</p>
+    <div class="doc-gallery" style="width: 100%; max-width: 900px;">
+        <div class="notion-card">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">📤</div>
+            <h4 style="margin-bottom: 0.5rem;">Upload</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary);">Bring your PDFs, research papers, or manuals.</p>
         </div>
-        """)
-    
-    with col2:
-        st.html("""
-        <div style='text-align: center; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;'>
-            <h3 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important; font-size: 1.2rem !important;'>🧠</h3>
-            <h4 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important;'>AI Analysis</h4>
-            <p style='margin: 0; color: var(--text-secondary); font-size: 0.9rem;'>Powered by Google Gemini</p>
+        <div class="notion-card">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">🧠</div>
+            <h4 style="margin-bottom: 0.5rem;">AI Analysis</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary);">Automatic topic detection and summary extraction.</p>
         </div>
-        """)
-    
-    with col3:
-        st.html("""
-        <div style='text-align: center; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;'>
-            <h3 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important; font-size: 1.2rem !important;'>💬</h3>
-            <h4 style='margin: 0 0 0.5rem 0; color: var(--text-color) !important;'>Chat</h4>
-            <p style='margin: 0; color: var(--text-secondary); font-size: 0.9rem;'>Get instant answers & citations</p>
+        <div class="notion-card">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+            <h4 style="margin-bottom: 0.5rem;">Chat</h4>
+            <p style="font-size: 0.9rem; color: var(--text-secondary);">Ask questions and get answers with citations.</p>
         </div>
-        """)
+    </div>
+</div>
+    """)

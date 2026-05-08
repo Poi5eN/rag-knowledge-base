@@ -1,5 +1,7 @@
+# pyrefly: ignore [missing-import]
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from typing import List
+# pyrefly: ignore [missing-import]
 import streamlit as st
 from src.utils.config import Config
 
@@ -15,7 +17,7 @@ class EmbeddingGenerator:
     def _load_model(_self):
         """Load the Google embeddings model (cached)."""
         return GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004",
+            model="models/embedding-001",
             google_api_key=Config.GOOGLE_API_KEY
         )
     

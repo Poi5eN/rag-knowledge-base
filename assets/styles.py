@@ -54,16 +54,25 @@ def get_custom_css(theme: str = "light"):
     header {{ visibility: visible !important; background: transparent !important; }}
     [data-testid="stHeader"] {{ background: transparent !important; }}
     
-    /* Move Sidebar Toggle to Top Right (Simulated) */
-    /* This is hard in Streamlit without custom JS, so we'll just make the default one beautiful */
+    /* SIDEBAR TOGGLE BUTTON - High Visibility */
     [data-testid="stSidebarCollapse"] {{
-        position: fixed;
-        right: 5rem;
-        top: 0.75rem;
-        z-index: 99999;
-        background: var(--card-bg) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 6px !important;
+        background-color: var(--accent-color) !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 4px !important;
+        box-shadow: 0 2px 8px rgba(35, 131, 226, 0.4) !important;
+        transition: transform 0.2s ease !important;
+    }}
+    
+    [data-testid="stSidebarCollapse"]:hover {{
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(35, 131, 226, 0.6) !important;
+    }}
+    
+    /* Make the icon inside the toggle white */
+    [data-testid="stSidebarCollapse"] svg {{
+        fill: white !important;
+        stroke: white !important;
     }}
 
     /* Cards */
@@ -116,13 +125,6 @@ def get_custom_css(theme: str = "light"):
     .stProgress > div > div > div > div {{
         background-color: var(--accent-color);
         border-radius: 10px;
-    }}
-
-    /* Welcome Icons */
-    .welcome-icon {{
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
     }}
 
     </style>
