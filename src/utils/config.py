@@ -10,9 +10,11 @@ class Config:
     
     # API Keys
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
     
     # Model Configuration
-    LLM_MODEL = "gemini-2.5-flash"  # Stable model as of Dec 2025 (GA: June 17, 2025)
+    LLM_MODEL = "gemini-1.5-flash"  # Primary Google model
+    OPENROUTER_MODEL = "openrouter/auto"  # Auto model for OpenRouter
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # Free local model
     
     # ChromaDB Configuration
@@ -34,8 +36,8 @@ class Config:
     @staticmethod
     def validate():
         """Validate required configuration."""
-        if not Config.GOOGLE_API_KEY:
+        if not Config.GOOGLE_API_KEY and not Config.OPENROUTER_API_KEY:
             raise ValueError(
-                "GOOGLE_API_KEY not found in environment variables. "
-                "Please set it in .env file or environment."
+                "Neither GOOGLE_API_KEY nor OPENROUTER_API_KEY found in environment variables. "
+                "Please set at least one of them in .env file or environment."
             )

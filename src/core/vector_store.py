@@ -75,7 +75,7 @@ class VectorStore:
         if progress_callback:
             progress_callback(0.7, "Storing in vector database...")
         
-        self.collection.add(
+        self.collection.upsert(
             embeddings=embeddings,
             documents=texts,
             metadatas=metadatas,

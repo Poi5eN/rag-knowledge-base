@@ -1,7 +1,11 @@
 """PDF processing and text extraction."""
+import json
+from typing import List, Dict
 from PyPDF2 import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from typing import List, Dict
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
 import streamlit as st
 from src.utils.config import Config
 
@@ -20,18 +24,39 @@ class PDFProcessor:
         
     def generate_xray_metadata(self, text_sample: str) -> Dict:
         """
-        Generate 'X-Ray' metadata (topics, type) using Gemini Flash.
+        Generate 'X-Ray' metadata (topics, type) using OpenRouter/Gemini.
         Uses the first few pages of text to categorize the document.
         """
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            from langchain_core.prompts import PromptTemplate
+            llms = []
             
-            llm = ChatGoogleGenerativeAI(
-                model=Config.LLM_MODEL,
-                google_api_key=Config.GOOGLE_API_KEY,
-                temperature=0.0
-            )
+            # 1. Primary: OpenRouter
+            if Config.OPENROUTER_API_KEY:
+                llms.append(ChatOpenAI(
+                    model=Config.OPENROUTER_MODEL,
+                    openai_api_key=Config.OPENROUTER_API_KEY,
+                    openai_api_base="https://openrouter.ai/api/v1",
+                    temperature=0.0,
+                    default_headers={
+                        "HTTP-Referer": "https://github.com/rag-knowledge-base",
+                        "X-Title": "RAG Knowledge Base"
+                    }
+                ))
+                
+            # 2. Fallback: Google Gemini
+            if Config.GOOGLE_API_KEY:
+                llms.append(ChatGoogleGenerativeAI(
+                    model=Config.LLM_MODEL,
+                    google_api_key=Config.GOOGLE_API_KEY,
+                    temperature=0.0,
+                    convert_system_message_to_human=True
+                ))
+                
+            if not llms:
+                raise ValueError("No LLM API keys provided.")
+                
+            # Initialize LLM with fallback
+            llm = llms[0].with_fallbacks(llms[1:]) if len(llms) > 1 else llms[0]
             
             prompt = PromptTemplate(
                 template="""Analyze the following document text and extract key metadata and frequently asked questions.
@@ -59,7 +84,6 @@ class PDFProcessor:
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0]
                 
-            import json
             return json.loads(content)
         except Exception as e:
             print(f"Error generating X-Ray metadata: {e}")
@@ -95,16 +119,14 @@ class PDFProcessor:
                             "filename": filename,
                             "source": filename,
                             "page": page_num + 1,  # 1-indexed for display
-                            "chunk_id": len(all_chunks) + i
+                            "chunk_id": len(all_chunks)  # Simple unique ID within this file
                         }
                     })
             
             # 2. Generate X-Ray Metadata (Topics, Summary)
             xray_data = self.generate_xray_metadata(full_text_for_xray)
             
-            # 3. Enrich all chunks with X-Ray data (denormalized for retrieval filtering if needed)
-            # And also return the doc-level metadata separately?
-            # For now, we'll attach it to every chunk so it's available in the VectorStore results
+            # 3. Enrich all chunks with X-Ray data
             for chunk in all_chunks:
                 chunk["metadata"].update(xray_data)
                 

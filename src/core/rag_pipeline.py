@@ -1,5 +1,6 @@
 """RAG pipeline using LangChain and Google Gemini."""
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.documents import Document
@@ -55,14 +56,45 @@ class RAGPipeline:
         self.chat_history = []  # Simple list for chat history
         self.retriever = CustomRetriever(vector_store)
     
-    def _init_llm(self):
-        """Initialize Google Gemini LLM."""
-        return ChatGoogleGenerativeAI(
-            model=Config.LLM_MODEL,
-            google_api_key=Config.GOOGLE_API_KEY,
-            temperature=0.3,
-            convert_system_message_to_human=True
-        )
+    def _init_llm(self, streaming=False, callbacks=None):
+        """Initialize LLM with OpenRouter as primary and Gemini as fallback."""
+        llms = []
+        
+        # 1. Primary: OpenRouter
+        if Config.OPENROUTER_API_KEY:
+            primary_llm = ChatOpenAI(
+                model=Config.OPENROUTER_MODEL,
+                openai_api_key=Config.OPENROUTER_API_KEY,
+                openai_api_base="https://openrouter.ai/api/v1",
+                temperature=0.3,
+                streaming=streaming,
+                callbacks=callbacks,
+                default_headers={
+                    "HTTP-Referer": "https://github.com/rag-knowledge-base",
+                    "X-Title": "RAG Knowledge Base"
+                }
+            )
+            llms.append(primary_llm)
+            
+        # 2. Fallback: Google Gemini
+        if Config.GOOGLE_API_KEY:
+            fallback_llm = ChatGoogleGenerativeAI(
+                model=Config.LLM_MODEL,
+                google_api_key=Config.GOOGLE_API_KEY,
+                temperature=0.3,
+                streaming=streaming,
+                callbacks=callbacks,
+                convert_system_message_to_human=True
+            )
+            llms.append(fallback_llm)
+            
+        if not llms:
+            raise ValueError("No LLM API keys provided. Please check your .env file.")
+            
+        # Create chain with fallback if multiple providers available
+        if len(llms) > 1:
+            return llms[0].with_fallbacks(llms[1:])
+        return llms[0]
     
     def _create_prompt(self) -> PromptTemplate:
         """Create the prompt template with CoT instructions."""
@@ -132,14 +164,7 @@ Answer:"""
             stream_handler = StreamHandler(stream_container)
             # Create a simple callback to accumulate text properly since stream_handler 
             # might not capture everything if we are doing complex logic
-            streaming_llm = ChatGoogleGenerativeAI(
-                model=Config.LLM_MODEL,
-                google_api_key=Config.GOOGLE_API_KEY,
-                temperature=0.3, # Low temp for reasoning
-                streaming=True,
-                callbacks=[stream_handler],
-                convert_system_message_to_human=True
-            )
+            streaming_llm = self._init_llm(streaming=True, callbacks=[stream_handler])
             # We invoke and get the full response wrapper
             response_obj = streaming_llm.invoke(formatted_prompt)
             full_response = response_obj.content
