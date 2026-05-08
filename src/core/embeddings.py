@@ -17,7 +17,7 @@ class EmbeddingGenerator:
     def _load_model(_self):
         """Load the Google embeddings model (cached)."""
         return GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001",
+            model="models/gemini-embedding-001",
             google_api_key=Config.GOOGLE_API_KEY
         )
     
